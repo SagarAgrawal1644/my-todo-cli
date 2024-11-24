@@ -5,7 +5,7 @@ package main
 
 import (
 	"mytodo/cmd"
-	"mytodo/mytodo/database"
+	"mytodo/database"
 )
 
 func main() {

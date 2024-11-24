@@ -8,15 +8,11 @@ import (
 	"github.com/alexeyco/simpletable"
 )
 
-type Tasks struct {
-	Tasks []Todo `json:"tasks"`
-}
-
 type Todo struct {
-	Id          int       `json:"id"`
-	Description string    `json:"description"`
-	DueDate     time.Time `json:"due-date"`
-	Completed   bool      `json:"completed"`
+	Id          int
+	Description string
+	DueDate     time.Time
+	Completed   bool
 }
 
 //will use a json file to store the todo list
