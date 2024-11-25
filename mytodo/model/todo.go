@@ -2,10 +2,9 @@ package model
 
 import (
 	"fmt"
+	"mytodo/mytodo/database"
 	"strconv"
 	"time"
-
-	"github.com/alexeyco/simpletable"
 )
 
 type Todo struct {
@@ -15,94 +14,82 @@ type Todo struct {
 	Completed   bool
 }
 
-//will use a json file to store the todo list
-
-// create an instance for a new task
-func NewTodo(description string, dueDate time.Time) *Todo {
-	return &Todo{
-		Description: description,
-		DueDate:     dueDate,
-		Completed:   false,
-	}
-}
-
-// array to store the tasks - add the functionality to load these from the file
-var Todos []Todo
-
 // add the new task to the array
-func AddTodo(newTodo Todo) {
-	Todos = append(Todos, newTodo)
+func AddTodo(description string, dueDate time.Time) error {
+	query := "INSERT INTO tasks (description, due_date, completed) VALUES (?, ?, ?,)"
+	_, err := database.DB.Exec(query, description, dueDate.Format("2006-01-02"), false)
+	if err != nil {
+		return fmt.Errorf("failed to add task: %w", err)
+	}
+	fmt.Println("Task added successfully!")
+	return nil
+
 }
 
 // list all the tasks
-func ListTodos() {
-	if len(Todos) == 0 {
-		fmt.Println("No tasks found.")
-		return
+func ListTodos() ([]Todo, error) {
+	query := "SELECT id, description, due_date, completed FROM tasks"
+	rows, err := database.DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tasks: %w", err)
+	}
+	defer rows.Close()
+
+	var todos []Todo
+	for rows.Next() {
+		var todo Todo
+		var dueDate string
+		err := rows.Scan(&todo.ID, &todo.Description, &dueDate, &todo.Completed)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		todo.DueDate, _ = time.Parse("2006-01-02", dueDate)
+		todos = append(todos, todo)
 	}
 
-	fmt.Println("To-do List")
+	return todos, nil
+	//fmt.Println("To-do List")
 	//logic for iterating and printing all the tasks
 	//wanna try to make it tabular using more packages
-
-	//using simpletable package from alexeyco
-
-	//create a new table
-	table := simpletable.New()
-
-	//defining the headers
-	table.Header = &simpletable.Header{
-		Cells: []*simpletable.Cell{
-			{Text: "Task Id"},
-			{Text: "Description"},
-			{Text: "Due Date"},
-			{Text: "Completed"},
-		},
-	}
-
-	// Add rows to the body
-	table.Body = &simpletable.Body{
-		Cells: [][]*simpletable.Cell{
-			{
-				{Text: "1"},
-				{Text: "Learn Golang"},
-				{Text: "added 5 days ago"},
-				{Text: "pending"},
-			},
-		},
-	}
-
-	// table footer
-	table.Footer = &simpletable.Footer{
-		Cells: []*simpletable.Cell{
-			{Text: "Total", Span: 2},
-			{Text: "1 Task"},
-		},
-	}
-
-	table.SetStyle(simpletable.StyleMarkdown)
-
-	table.Print()
 
 }
 
 // mark a task as done
-func MarkAsCompleted(idstr string) {
+func MarkAsCompleted(id int) {
 
-	id, _ := strconv.Atoi(idstr)
-
-	//search the item by its id and mark completed as true
-	for _, item := range Todos {
-		if item.Id == id {
-			if item.Completed == true {
-				fmt.Println("Task already completed.")
-				return
-			} else {
-				item.Completed = true
-				return
-			}
-		}
+	query := "SELECT id, description, due_date, completed FROM tasks WHERE id = ?"
+	row, err := DB.QueryRow(query, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search the task: %w", err)
 	}
-	fmt.Println("Enter a valid ID {use the 'list' command to display your to-do list")
-	return
+
+	var task Todo
+
+	err := row.Scan(&task.ID, &task.Description, &task.dueDate, &task.Completed)
+	
+	if err == sql.ErrNoRows {
+		fmt.Println("Enter a valid task ID.")
+		return
+	}
+	else if err != nil {
+		fmt.Errorf("failed to scan row: %w", err)
+		return
+	}
+
+	// check if the task is already completed
+	if task.Completed {
+		fmt.Println("Task is already completed.")
+		return 
+	}
+
+	// update the task by a new query
+	updateQuery := "UPDATE tasks SET completed = ? WHERE id = ?"
+	_, err = db.Exec(updateQuery, true, id)
+	if err != nil {
+		fmt.Println("Error updating task:", err)
+		return
+	}
+
+	fmt.Printf("Task with ID %d marked as completed.\n", id)
+
 }
