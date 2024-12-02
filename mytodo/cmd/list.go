@@ -8,6 +8,7 @@ import (
 
 	"mytodo/model"
 
+	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +24,55 @@ var listCmd = &cobra.Command{
 
 func runList(cmd *cobra.Command, args []string) {
 	fmt.Println("list called")
+	//items to display
+	displayItems, _ := model.ListTodos()
 
-	model.ListTodos()
+	//logic to display the items in a tabular form
+	table := simpletable.New()
+
+	//add headers
+	table.Header = &simpletable.Header{
+		Cells: []*simpletable.Cell{
+			{Text: "ID"},
+			{Text: "Description"},
+			{Text: "Due Date"},
+			{Text: "Completed"},
+		},
+	}
+
+	//adding rows for eac todo item
+	for _, todo := range displayItems {
+		// Format due date and completed status
+		dueDate := todo.DueDate.Format("2006-01-02")
+		completed := "No"
+		if todo.Completed {
+			completed = "Yes"
+		}
+
+		row := []*simpletable.Cell{
+			{Text: fmt.Sprintf("%d", todo.ID)},
+			{Text: todo.Description},
+			{Text: dueDate},
+			{Text: completed},
+		}
+
+		table.Body.Cells == append(table.Body.Cells, row)
+
+	}
+
+	//add a footer if there are no todo items
+	if len(displayItems) == 0 {
+		table.Footer = &simpletable.Footer{
+			Cells: []*simpletable.Cell{
+				{Text: "No tasks found", Span: 4, Align: simpletable.AlignCenter},
+			},
+		}
+	}
+
+	//print table
+	table.setStyle(simpletable.StyleUnicode)
+	fmt.Println(table.String())
+
 }
 
 func init() {

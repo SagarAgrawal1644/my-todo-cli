@@ -41,17 +41,13 @@ func ListTodos() ([]Todo, error) {
 		var dueDate string
 		err := rows.Scan(&todo.ID, &todo.Description, &dueDate, &todo.Completed)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+
 		}
 		todo.DueDate, _ = time.Parse("2006-01-02", dueDate)
 		todos = append(todos, todo)
 	}
 
 	return todos, nil
-	//fmt.Println("To-do List")
-	//logic for iterating and printing all the tasks
-	//wanna try to make it tabular using more packages
-
 }
 
 // mark a task as done
