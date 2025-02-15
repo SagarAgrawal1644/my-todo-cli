@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"mytodo/model"
 
@@ -26,12 +27,15 @@ var doneCmd = &cobra.Command{
 			return
 		}
 
-		if len(model.Todos) == 0 {
-			fmt.Println("Add some task to mark it as completed {use the 'add' command to add tasks}")
+		idstr := args[0]
+
+		//parsing id from string to int
+		id, err := strconv.ParseInt(idstr, 2, 64)
+		if err != nil {
+			fmt.Println("Error parsing the id : ", err)
 			return
 		}
 
-		id := args[0]
 		model.MarkAsCompleted(id)
 
 	},

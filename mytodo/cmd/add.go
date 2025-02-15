@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var dueDateInput string //variable to store the user due date
+
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add",
@@ -23,24 +25,40 @@ var addCmd = &cobra.Command{
 }
 
 func runAdd(cmd *cobra.Command, args []string) {
-	fmt.Println("add command called (ready to place your logic) ")
+	//fmt.Println("add command called (ready to place your logic) ")
 
 	if len(args) == 0 {
 		fmt.Println("Please provide a task description.")
 		return
 	}
 
-	newTodo := model.NewTodo(args[0], time.Now().Add(48*time.Hour))
+	taskDescription := args[0]
 
-	newTodo.Id = len(model.Todos) + 1
+	//Parsing the user provided due date
+	var dueDate time.Time
+	var err error
+	if dueDateInput != "" {
+		dueDate, err = time.Parse("2006-01-02", dueDateInput) //user ro provide the date in yyyy-mm-dd format
+		if err != nil {
+			fmt.Println("Invalid date format. Please use yyyy-mm-dd.")
+			return
+		}
+	} else {
+		//defalut date if no date added using the -d flag
+		dueDate = time.Now().Add(48 * time.Hour)
+	}
 
-	model.AddTodo(*newTodo)
-
-	fmt.Printf("Task '%s' added with due date %s\n", newTodo.Description, newTodo.DueDate.Format("2006-01-02"))
-
+	// call the AddTodo function to add the task
+	if err := model.AddTodo(args[0], args[1]); err != nil {
+		fmt.Println("Error adding Task: %v \n", err)
+		return
+	}
 }
 
 func init() {
+
+	// flag to accept due date from the user
+	addCmd.Flags().StringVarP(&dueDateInput, "due-date", "d", "", "Set custom due date in YYYY-MM-DD format")
 	rootCmd.AddCommand(addCmd)
 
 	// Here you will define your flags and configuration settings.
